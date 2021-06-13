@@ -9,7 +9,7 @@ Putting the machine into sleep is a disrespect for time.
 ## Usage
 
 ```shell
-python task_scheduler_mp.py --interpreter your_python_path --verbose --gpu-pool 0 1 --max-workers 2 --cmd-pool ./cmd_pools.txt
+python run_it.py --interpreter your_python_path --verbose --gpu-pool 0 1 --max-workers 2 --cmd-pool ./cmd_pools.txt
 ```
 
 ##  demo
