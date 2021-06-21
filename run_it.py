@@ -96,7 +96,7 @@ def main():
         proc_slots.append(
             MyProcess(
                 interpreter_path=args.interpreter,
-                gpu_id=args.gpu_pool[i % args.max_workers],
+                gpu_id=args.gpu_pool[i % num_gpus],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
