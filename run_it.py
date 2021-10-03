@@ -81,6 +81,11 @@ class MyProcess:
 
     def create_and_start_proc(self, cmd=None):
         if (used_mem := self.get_used_mem(return_ratio=True)) > self.max_used_ratio:
+            # TODO:
+            #   当前的判定方式并不是太准确。最好的方式是由程序提供设置周期数的选项(`--num-epochs`)，
+            #   首先按照num_epoch=1来进行初步的运行，并统计各个命令对应使用的显存。
+            #   之后根据这些程序实际使用的显存来安排后续的操作。
+            #   这可能需要程序对输出可以实现覆盖式(`--overwrite`)操作。
             self.status = STATUS.GPU_BUSY
             print(
                 f"[ID {self.slot_idx} WARN] the memory usage of the GPU {self.gpu_id} is currently {used_mem}, "
@@ -127,6 +132,7 @@ def get_args():
         required=True,
         help="The text file containing all your commands. It will be combined with `interpreter`.",
     )
+    parser.add_argument("--max-used-ratio", type=float, default=0.5, help="The max used ratio of the gpu.")
     args = parser.parse_args()
     if args.max_workers is None:
         args.max_workers = len(args.gpu_pool)
@@ -152,7 +158,7 @@ def main():
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             num_cmds=len(cmd_pool),
-            max_used_ratio=0.5,
+            max_used_ratio=args.max_used_ratio,
         )
         print(proc)
         proc_slots.append(proc)
