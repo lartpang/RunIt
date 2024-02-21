@@ -1,5 +1,5 @@
-./examples/demo.py
-./examples/demo.py
-./examples/demo.py
-./examples/demo.py
-./examples/demo.py
+python -m pip list
+python --version
+python ./examples/demo.py
+python ./examples/demo.py
+python ./examples/demo.py

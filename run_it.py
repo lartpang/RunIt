@@ -26,12 +26,18 @@ class MyProcess:
     curr_task_id = 0
 
     def __init__(
-        self, interpreter_path, gpu_id, verbose=True, stdin=None, stdout=None, stderr=None, num_cmds=None,
-        max_used_ratio=0.5
+        self,
+        gpu_id,
+        verbose=True,
+        num_cmds=None,
+        max_used_ratio=0.5,
+        *,
+        stdin=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
     ):
         super().__init__()
         self.gpu_id = gpu_id
-        self.interpreter_path = interpreter_path
         self.verbose = verbose
         self.num_cmds = num_cmds
 
@@ -60,13 +66,13 @@ class MyProcess:
 
     def _create_sub_proc(self, cmd=""):
         self.sub_proc = subprocess.Popen(
-            args=f"CUDA_VISIBLE_DEVICES={self.gpu_id} {self.interpreter_path} -u {cmd}",
+            args=cmd,
             stdin=self.stdin,
             stdout=self.stdout,
             stderr=self.stderr,
             shell=True,
-            executable="bash",
-            env=None,
+            # executable="bash",
+            # env=None,
             close_fds=True,
             bufsize=1,
             text=True,
@@ -117,26 +123,19 @@ def read_cmds_from_txt(path):
     return cmds
 
 
+# fmt: off
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--interpreter", type=str, required=True, help="The path of your interpreter you want to use.")
     parser.add_argument("--verbose", action="store_true", help="Whether to print the output of the subprocess.")
-    parser.add_argument(
-        "--gpu-pool", nargs="+", type=int, default=[0],
-        help="The pool containing all ids of your gpu devices."
-    )
+    parser.add_argument("--gpu-pool", nargs="+", type=int, default=[0], help="The pool containing all ids of your gpu devices.")
     parser.add_argument("--max-workers", type=int, help="The max number of the workers.")
-    parser.add_argument(
-        "--cmd-pool",
-        type=str,
-        required=True,
-        help="The text file containing all your commands. It will be combined with `interpreter`.",
-    )
+    parser.add_argument("--cmd-pool",type=str, required=True, help="The text file containing all your commands. It need to contain the launcher.")
     parser.add_argument("--max-used-ratio", type=float, default=0.5, help="The max used ratio of the gpu.")
     args = parser.parse_args()
     if args.max_workers is None:
         args.max_workers = len(args.gpu_pool)
     return args
+# fmt: on
 
 
 def main():
@@ -152,11 +151,8 @@ def main():
     for i in range(min(args.max_workers, len(cmd_pool))):  # 确保slots数量小于等于命令数量
         gpu_id = i % num_gpus
         proc = MyProcess(
-            interpreter_path=args.interpreter,
             gpu_id=args.gpu_pool[gpu_id],
             verbose=args.verbose,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
             num_cmds=len(cmd_pool),
             max_used_ratio=args.max_used_ratio,
         )
