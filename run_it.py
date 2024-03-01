@@ -66,7 +66,7 @@ class MyProcess:
 
     def _create_sub_proc(self, cmd=""):
         self.sub_proc = subprocess.Popen(
-            args=cmd,
+            args=f"CUDA_VISIBLE_DEVICES={self.gpu_id} {cmd}",
             stdin=self.stdin,
             stdout=self.stdout,
             stderr=self.stderr,
