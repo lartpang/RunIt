@@ -1,5 +1,0 @@
-python -m pip list
-python --version
-python ./examples/demo.py
-python ./examples/demo.py
-python ./examples/demo.py
