@@ -14,8 +14,7 @@ Putting the machine into sleep is a disrespect for time.
 
 ```shell
 $ python run_it.py --help
-usage: run_it.py [-h] [--gpu-pool GPU_POOL [GPU_POOL ...]] --max-workers MAX_WORKERS --cmd-pool CMD_POOL
-                 [--interval-for-waiting-gpu INTERVAL_FOR_WAITING_GPU] [--interval-for-loop INTERVAL_FOR_LOOP]
+usage: run_it.py [-h] [--gpu-pool GPU_POOL [GPU_POOL ...]] [--max-workers MAX_WORKERS] --cmd-pool CMD_POOL [--interval-for-waiting-gpu INTERVAL_FOR_WAITING_GPU] [--interval-for-loop INTERVAL_FOR_LOOP]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -46,22 +45,20 @@ $ python run_it.py --gpu-pool 0 2 3 --max-workers 3 --cmd-pool .\examples\config
 - name: job1
   command: "python ./examples/demo.py --value 1"
   num_gpus: 1
-
 - name: job2
   command: "python ./examples/demo.py --value 2"
   num_gpus: 1
-
 - name: job3
   command: "python ./examples/demo.py --value 3"
   num_gpus: 1
-
 - name: job4
   command: "python ./examples/demo.py --value 4"
   num_gpus: 1
-
 - name: job5
   command: "python ./examples/demo.py --value 5"
   num_gpus: 2
+- { name: job6, command: "python ./examples/demo.py --value 5", num_gpus: 2 }
+- { name: job7, command: "python ./examples/demo.py --value 5", num_gpus: 2 }
 ```
 
  </details>
