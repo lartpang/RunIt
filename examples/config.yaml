@@ -1,6 +1,12 @@
 - name: job1
   command: "python ./examples/demo.py --value 1"
   num_gpus: 1
+- name: job02
+  command: "python ./examples/demo.py --value 1 --exception"
+  num_gpus: 1
+- name: job03
+  command: "python ./examples/demo.py --value 1 --exception"
+  num_gpus: 1
 - name: job2
   command: "python ./examples/demo.py --value 2"
   num_gpus: 1
