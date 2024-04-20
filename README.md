@@ -85,7 +85,7 @@ graph TD
 
 ## Thanks
 
-[@BitCalSaul](https://github.com/BitCalSaul): Thanks for the positive feedbacks!
+- [@BitCalSaul](https://github.com/BitCalSaul): Thanks for the positive feedbacks!
   - <https://github.com/lartpang/RunIt/issues/3>
   - <https://github.com/lartpang/RunIt/issues/2>
   - <https://github.com/lartpang/RunIt/issues/1>
