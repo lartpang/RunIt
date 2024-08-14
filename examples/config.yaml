@@ -1,23 +1,41 @@
-- name: job1
-  command: "python ./examples/demo.py --value 1"
-  num_gpus: 1
-- name: job02
-  command: "python ./examples/demo.py --value 1 --exception"
-  num_gpus: 1
-- name: job03
-  command: "python ./examples/demo.py --value 1 --exception"
-  num_gpus: 1
-- name: job2
-  command: "python ./examples/demo.py --value 2"
-  num_gpus: 1
-- name: job3
-  command: "python ./examples/demo.py --value 3"
-  num_gpus: 1
-- name: job4
-  command: "python ./examples/demo.py --value 4"
-  num_gpus: 1
-- name: job5
-  command: "python ./examples/demo.py --value 5"
-  num_gpus: 2
-- { name: job6, command: "python ./examples/demo.py --value 5", num_gpus: 2 }
-- { name: job7, command: "python ./examples/demo.py --value 5", num_gpus: 2 }
+gpu:
+  - id: 0
+    memory: 1024 # MB
+  - id: 1
+    memory: 1024 # MB
+  - id: 2
+    memory: 1024 # MB
+  - id: 3
+    memory: 1024 # MB
+
+job:
+  - name: job1
+    command: "python ./examples/demo.py --value 1"
+    num_gpus: 1
+    memory: 512
+  - name: job02
+    command: "python ./examples/demo.py --value 1 --exception"
+    num_gpus: 1
+    memory: 256
+  - name: job03
+    command: "python ./examples/demo.py --value 1 --exception"
+    num_gpus: 1
+    memory: 256
+  - name: job2
+    command: "python ./examples/demo.py --value 2"
+    num_gpus: 1
+    memory: 768
+  - name: job3
+    command: "python ./examples/demo.py --value 3"
+    num_gpus: 1
+    memory: 1024
+  - name: job4
+    command: "python ./examples/demo.py --value 4"
+    num_gpus: 1
+    memory: 512
+  - name: job5
+    command: "python ./examples/demo.py --value 5"
+    num_gpus: 2
+    memory: 128
+  - { name: job6, command: "python ./examples/demo.py --value 5", num_gpus: 2 } # memory=0
+  - { name: job7, command: "python ./examples/demo.py --value 5", num_gpus: 2 } # memory=0

@@ -4,6 +4,7 @@
 # @GitHub  : https://github.com/lartpang
 
 import argparse
+import logging
 import os
 import signal
 import subprocess
@@ -14,12 +15,22 @@ from queue import Queue
 
 import yaml
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(logging.Formatter("[%(name)s %(levelname)s] %(message)s"))
+logger.addHandler(stream_handler)
+
 
 class STATUS(Enum):
     WAITING = 0
     RUNNING = 1
     DONE = 2
     FAILED = 3
+
+
+def init_worker():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
 def worker(cmd: str, gpu_ids: str, queue: Queue, job_id: int, done_jobs: dict):
@@ -29,62 +40,60 @@ def worker(cmd: str, gpu_ids: str, queue: Queue, job_id: int, done_jobs: dict):
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = gpu_ids
 
-    # subprocess.run(cmd, shell=True, check=True, env=env)
     with subprocess.Popen(cmd, shell=True, env=env) as sub_proc:
-        # 使用subprocess.Popen代替subprocess.run
         try:
-            print(f"{job_identifier} Executing {cmd}...")
+            logger.info(f"{job_identifier} Executing `{cmd}`...")
             sub_proc.wait()
             done_jobs[job_id] = STATUS.DONE
         except Exception as e:
-            print(f"{job_identifier} Command '{cmd}' failed: {e}")
+            logger.error(f"{job_identifier} Command `{cmd}` failed: {e}")
             sub_proc.terminate()
             done_jobs[job_id] = STATUS.FAILED
 
     # 释放GPU资源回队列
     for gpu in gpu_ids.split(","):
         queue.put(gpu)
-    print(f"{job_identifier} Release GPU {gpu_ids}...")
+    logger.info(f"{job_identifier} Release GPU {gpu_ids}...")
 
 
 def get_args():
     # fmt: off
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gpu-pool", nargs="+", type=int, default=[0], help="The pool containing all ids of your gpu devices.")
+    parser.add_argument("--config", type=str, required=True, help="The path of the yaml containing all information of gpus and cmds.")
     parser.add_argument("--max-workers", type=int, help="The max number of the workers.")
-    parser.add_argument("--cmd-pool", type=str, required=True, help="The path of the yaml containing all cmds.")
     parser.add_argument("--interval-for-waiting-gpu", type=int, default=3, help="In seconds, the interval for waiting for a GPU to be available.")
     parser.add_argument("--interval-for-loop", type=int, default=1, help="In seconds, the interval for looping.")
     # fmt: on
-
-    args = parser.parse_args()
-    if args.max_workers is None:
-        args.max_workers = len(args.gpu_pool)
-    return args
-
-
-def init_worker():
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    return parser.parse_args()
 
 
 def main():
     args = get_args()
-    print("[YOUR CONFIG]\n" + str(args))
+    logger.info("[YOUR CONFIG]\n" + str(args))
 
-    with open(args.cmd_pool, mode="r", encoding="utf-8") as f:
-        jobs = yaml.safe_load(f)
-    assert isinstance(jobs, (tuple, list)), jobs
-    print("[YOUR CMDS]\n" + "\n\t".join([str(job) for job in jobs]))
+    with open(args.config, mode="r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+
+    gpu_infos: list = config["gpu"]
+    job_infos: list = config["job"]
+    assert isinstance(gpu_infos, (tuple, list)), gpu_infos
+    assert isinstance(job_infos, (tuple, list)), job_infos
+    logger.info("[YOUR GPUS]\n -" + "\n -".join([str(x) for x in gpu_infos]))
+    logger.info("[YOUR CMDS]\n -" + "\n -".join([str(x) for x in job_infos]))
+
+    if args.max_workers is None:
+        args.max_workers = len(gpu_infos)
 
     manager = Manager()
+
     # 创建一个跨进程共享的队列来统计空余的GPU资源
     available_gpus = manager.Queue()
-    for i in args.gpu_pool:
-        available_gpus.put(str(i))
+    for gpu_info in gpu_infos:
+        available_gpus.put(str(gpu_info["id"]))
     # 创建一个跨进程共享的dict来跟踪已完成的命令
     done_jobs = manager.dict()
-    for job_id, job_info in enumerate(jobs):
-        if job_info["num_gpus"] > len(args.gpu_pool):
+    for job_id, job_info in enumerate(job_infos):
+        if job_info["num_gpus"] > len(gpu_infos):
             raise ValueError(f"The number of gpus in job {job_id} is larger than the number of available gpus.")
         done_jobs[job_id] = STATUS.WAITING
 
@@ -97,7 +106,7 @@ def main():
     try:
         # 循环处理指令，直到所有指令都被处理
         while not all([status is STATUS.DONE for status in done_jobs.values()]):
-            for job_id, job_info in enumerate(jobs):
+            for job_id, job_info in enumerate(job_infos):
                 if done_jobs[job_id] in [STATUS.DONE, STATUS.RUNNING]:
                     continue
                 # else: STATUS.WAITING, STATUS.FAILED
@@ -116,7 +125,9 @@ def main():
                     pool.apply_async(worker, args=(command, gpu_ids, available_gpus, job_id, done_jobs))
                 else:
                     # 如果GPU资源不足，跳过当前指令，稍后重试
-                    print(f"Skipping '{command}', not enough GPUs available ({num_gpus} > {num_avaliable_gpus}).")
+                    logger.warning(
+                        f"Skipping `{command}`, not enough GPUs available ({num_gpus} > {num_avaliable_gpus})."
+                    )
                     # 等待一段时间再次检查
                     time.sleep(args.interval_for_waiting_gpu)
 
@@ -126,12 +137,12 @@ def main():
         # 关闭进程池并等待所有任务完成
         pool.close()
     except KeyboardInterrupt:
-        print("[CAUGHT KEYBOARDINTERRUPT, TERMINATING WORKERS!]")
+        logger.error("[CAUGHT KEYBOARDINTERRUPT, TERMINATING WORKERS!]")
         pool.terminate()
     finally:
         pool.join()
         manager.shutdown()
-    print("[ALL COMMANDS HAVE BEEN COMPLETED!]")
+    logger.info("[ALL COMMANDS HAVE BEEN COMPLETED!]")
 
 
 if __name__ == "__main__":
