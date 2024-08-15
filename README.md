@@ -16,43 +16,18 @@ Putting the machine into sleep is a disrespect for time.
 >
 > 2024-8-14: Now, the config file contains the information of your GPUs and jobs, more details can be found in [config.py](./examples/config.py).
 
-### `runit_with_exclusive_gpu.py`
+### Dependency
 
-One GPU can only be used by one job at a time.
+- PyYAML==6.0
+- nvidia-ml-py (`pynvml` only for `runit_based_on_detected_memory.py`)
 
-```shell
-$ python ./runit_with_exclusive_gpu.py --help
-usage: runit_with_exclusive_gpu.py [-h] --config CONFIG [--max-workers MAX_WORKERS] [--interval-for-waiting-gpu INTERVAL_FOR_WAITING_GPU] [--interval-for-loop INTERVAL_FOR_LOOP]
+### Scripts
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --config CONFIG       The path of the yaml containing all information of gpus and cmds.
-  --max-workers MAX_WORKERS
-                        The max number of the workers.
-  --interval-for-waiting-gpu INTERVAL_FOR_WAITING_GPU
-                        In seconds, the interval for waiting for a GPU to be available.
-  --interval-for-loop INTERVAL_FOR_LOOP
-                        In seconds, the interval for looping.
-```
+We provides 3 scripts for different ways to run jobs.
 
-### `runit_with_exclusive_gpu.py`
-
-One GPU can be used by many job at a time based on the memory usage.
-
-```
-$ python ./runit_based_on_memory.py --help
-usage: runit_based_on_memory.py [-h] --config CONFIG [--max-workers MAX_WORKERS] [--interval-for-waiting-gpu INTERVAL_FOR_WAITING_GPU] [--interval-for-loop INTERVAL_FOR_LOOP]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --config CONFIG       The path of the yaml containing all information of gpus and cmds.
-  --max-workers MAX_WORKERS
-                        The max number of the workers.
-  --interval-for-waiting-gpu INTERVAL_FOR_WAITING_GPU
-                        In seconds, the interval for waiting for a GPU to be available.
-  --interval-for-loop INTERVAL_FOR_LOOP
-                        In seconds, the interval for looping.
-```
+- `runit_with_exclusive_gpu.py`: One GPU can only be used by one job at a time.
+- `runit_based_on_memory`：One GPU can be used by many job at a time based on the memory usage.
+- `runit_based_on_detected_memory.py`: Use `pynvml` for detecting the total memory usage of each GPU. *But this may not be suitable for scenarios where the memory used by a running GPU application is unstable.*
 
 ## demo
 
