@@ -31,8 +31,8 @@ Putting the machine into sleep is a disrespect for time.
 We provides 4 scripts for different ways to run jobs.
 
 - `runit_with_exclusive_gpu.py`: One GPU can only be used by one job at a time.
-- `runit_based_on_memory.py`: One GPU can be used by many jobs at a time based on the memory usage.
-- `runit_based_on_detected_memory.py`: Use `pynvml` for detecting the total memory usage of each GPU. *But this may not be suitable for scenarios where the memory used by a running GPU application is unstable.*
+- `runit_based_on_memory.py`: One GPU can be used by many jobs at a time based on the memory usage. Supports `--allocation-strategy worst-fit/best-fit` to prioritize separating workloads vs packing them.
+- `runit_based_on_detected_memory.py`: Use `pynvml` for detecting the total memory usage of each GPU. *But this may not be suitable for scenarios where the memory used by a running GPU application is unstable.* Supports `--allocation-strategy worst-fit/best-fit`.
 - `runit_based_on_ray.py`: 🚀 **(New)** A modern, highly flexible alternative powered by [Ray](https://docs.ray.io/). It natively implements **VRAM Bin Packing** by converting memory requests into "Fractional GPUs" (e.g., `4000MB / 24000MB = 0.166` GPUs). Relying entirely on Ray's backend, it requires no manual `Lock` processes and safely isolates `CUDA_VISIBLE_DEVICES` natively and perfectly.
 
 ## demo

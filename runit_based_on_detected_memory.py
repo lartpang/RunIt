@@ -103,11 +103,13 @@ def worker(job_id: int, job_info: dict, available_gpu_ids: list, done_jobs: dict
         logger.debug(f"To {total_gpu_info}")
 
 
-def get_available_gpu_ids(job_info: dict, total_gpu_info: dict):
+def get_available_gpu_ids(job_info: dict, total_gpu_info: dict, allocation_strategy: str = "worst-fit"):
     # TODO: Better Assignment Strategy
     with lock:
         available_gpu_ids = []
-        for gpu_id, available_mem in total_gpu_info.items():
+        is_reverse = True if allocation_strategy == "worst-fit" else False
+        sorted_gpus = sorted(total_gpu_info.items(), key=lambda x: x[1], reverse=is_reverse)
+        for gpu_id, available_mem in sorted_gpus:
             if available_mem >= job_info["memory"]:
                 available_gpu_ids.append(gpu_id)
 
@@ -123,6 +125,7 @@ def get_args():
     parser.add_argument("--max-workers", type=int, help="The max number of the workers.")
     parser.add_argument("--interval-for-waiting-gpu", type=int, default=3, help="In seconds, the interval for waiting for a GPU to be available.")
     parser.add_argument("--interval-for-loop", type=int, default=1, help="In seconds, the interval for looping.")
+    parser.add_argument("--allocation-strategy", type=str, choices=["worst-fit", "best-fit"], default="worst-fit", help="Strategy for allocating jobs to GPUs. 'worst-fit' prioritizes GPUs with the most available memory (balances load). 'best-fit' prioritizes GPUs with the least available memory that still meets the requirement (reduces fragmentation).")
     # fmt: on
     return parser.parse_args()
 
@@ -175,7 +178,7 @@ def main():
                 if done_jobs[job_id] in [STATUS.DONE, STATUS.RUNNING]:
                     continue
 
-                available_gpu_ids = get_available_gpu_ids(job_info, total_gpu_info)
+                available_gpu_ids = get_available_gpu_ids(job_info, total_gpu_info, args.allocation_strategy)
                 if available_gpu_ids:
                     # 如果当前有足够的GPU资源，执行指令
                     with lock:
