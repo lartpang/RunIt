@@ -68,10 +68,10 @@ def get_available_gpu_ids(job_info: dict, total_gpu_info: dict, allocation_strat
         is_reverse = True if allocation_strategy == "worst-fit" else False
         sorted_gpus = sorted(total_gpu_info.items(), key=lambda x: x[1], reverse=is_reverse)
         for gpu_id, available_mem in sorted_gpus:
-            if available_mem >= job_info["memory"]:
+            if int(available_mem) >= int(job_info["memory"]):
                 available_gpu_ids.append(gpu_id)
 
-        if len(available_gpu_ids) <= job_info["num_gpus"]:
+        if len(available_gpu_ids) < job_info["num_gpus"]:
             return None
         return available_gpu_ids[: job_info["num_gpus"]]
 
